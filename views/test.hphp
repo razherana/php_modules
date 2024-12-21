@@ -1,0 +1,17 @@
+<block header>
+  <h1>Header</h1>
+</block>
+
+<template lignetable>
+  <tr>
+    <td><?= $id ?></td>
+    <td><?= $nom ?></td>
+    <td><?= $prenom ?></td>
+  </tr>
+</template>
+
+<block footer>
+  <h1>Footer mlay be</h1>
+</block>
+
+<join template vars="compact('datas')"/>

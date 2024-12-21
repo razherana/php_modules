@@ -1,0 +1,170 @@
+{
+	"Block HPHP" : {
+		"prefix": "block",
+		"body": [
+			"<block ${1:name}>",
+			"$2",
+			"</block>"
+		],
+		"description": "Make a block hphp"
+	},
+	"Include HPHP" : {
+		"prefix": "include",
+		"body": [
+			"<include ${1:name} ${2:vars=\"[$3]\"} />"
+		],
+		"description": "Make an include hphp"
+	},
+	"Use HPHP" : {
+		"prefix": "use",
+		"body": [
+			"<use ${1:name} />"
+		],
+		"description": "Make an use hphp"
+	},
+	"Template HPHP" : {
+		"prefix": "template",
+		"body": [
+			"<template ${1:template_name} ${2:use=\"${3:[]}\"}>",
+			"$4",
+			"</template>"
+		],
+		"description": "Make a template hphp"
+	},
+	"Use template HPHP" : {
+		"prefix": "use-template",
+		"body": [
+			"<use-template ${1:name} ${2:vars=\"${3:[]}\"}/>"
+		],
+		"description": "Make an use template hphp"
+	},
+	"Join HPHP" : {
+		"prefix": "join",
+		"body": [
+			"<join ${1:name} ${2:vars=\"${3:[]}\"}/>"
+		],
+		"description": "Make a join hphp"
+	},
+	"For HPHP": {
+		"prefix": "for",
+		"body": [
+			"<for content=\"$${1:i} = $2; $${1:i} < count($3); $${1:i}++\">",
+			"$4",
+			"</for>"
+		],
+		"description": "Make a for loop with hphp"
+	},
+	"Foreach HPHP": {
+		"prefix": "foreach",
+		"body": [
+			"<foreach content=\"$${1:array} as ${3:$${4:keys} =>} $${2:variable}\">",
+			"$5",
+			"</foreach>"
+		],
+		"description": "Make a foreach loop with hphp"
+	},
+	"If ElIf Else HPHP": {
+		"prefix": "ifelif",
+		"body": [
+			"<if content=\"$1\">",
+			"$2",
+			"</if ${3:elseif}>",
+			"<elseif content=\"$4\">",
+			"</elseif ${5:else}>",
+			"<else>",
+			"$6",
+			"</else>"
+		],
+		"description": "Make an if and elseif and else hphp"
+	},
+	"If HPHP": {
+		"prefix": "if",
+		"body": [
+			"<if content=\"$1\">",
+			"$2",
+			"</if>"
+		],
+		"description": "Make an if hphp"
+	},
+	"Else HPHP": {
+		"prefix": "else",
+		"body": [
+			"<else>",
+			"$1",
+			"</else>"
+		],
+		"description": "Make an else hphp"
+	},
+	"ElIf HPHP": {
+		"prefix": "elif",
+		"body": [
+			"<elseif content=\"$1\">",
+			"$2",
+			"</elseif>"
+		],
+		"description": "Make an elseif hphp"
+	},
+	"If Else HPHP": {
+		"prefix": "ifelse",
+		"body": [
+			"<if content=\"$1\">",
+			"$2",
+			"</if else>",
+			"<else>",
+			"$3",
+			"</else>"
+		],
+		"description": "Make an if-else hphp"
+	},
+	"ElIf Else HPHP": {
+		"prefix": "elifelse",
+		"body": [
+			"<elseif content=\"$1\">",
+			"$2",
+			"</elseif else>",
+			"<else>",
+			"$3",
+			"</else>"
+		],
+		"description": "Make an elseif else hphp"
+	},
+	"ElIf ElIf HPHP": {
+		"prefix": "elifelse",
+		"body": [
+			"<elseif content=\"$1\">",
+			"$2",
+			"</elseif elseif>",
+			"<elseif content=\"$3\">",
+			"$4",
+			"</elseif>"
+		],
+		"description": "Make an elseif else hphp"
+	},
+	"Comments HPHP" : {
+		"prefix": "comment",
+		"body": [
+			"<comment>",
+			"$1",
+			"</comment>"
+		],
+		"description": "Make a comment"
+	},
+	"Auth HPHP": {
+		"prefix": "auth",
+		"body": [
+			"<auth name=\"$1\">",
+			"$2",
+			"</auth${3: else}>"
+		],
+		"description": "Make an auth block"
+	},
+	"Guest HPHP": {
+		"prefix": "guest",
+		"body": [
+			"<guest name=\"$1\">",
+			"$2",
+			"</guest${3: else}>"
+		],
+		"description": "Make a guest block"
+	}
+}
