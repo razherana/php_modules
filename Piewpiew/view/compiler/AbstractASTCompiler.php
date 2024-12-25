@@ -2,18 +2,16 @@
 
 namespace Piewpiew\view\compiler;
 
+use Piewpiew\view\comm\ViewElement;
+use Piewpiew\view\compiler\ast\AbstractDictionary;
+use Piewpiew\view\compiler\ast\AbstractTermEvent;
+use Piewpiew\view\compiler\ast\Lexiq;
+use Piewpiew\view\compiler\ast\TextLexiq;
 use Piewpiew\view\compiler\exceptions\CompilerException;
 use Piewpiew\view\compiler\exceptions\UnsupportedCompilerException;
 use Piewpiew\view\View;
-use Piewpiew\view\compiler\components\Component;
-use Piewpiew\view\comm\ViewElement;
 
-/**
- * Every view compiler extends from this abstract class
- * You may want to use the abstract AST compiler 
- * if you want more checkings and liberty not syntax substitution.
- */
-abstract class AbstractCompiler
+abstract class AbstractASTCompiler
 {
   /**
    * Contains the ViewElement to compile and return a filename
@@ -26,6 +24,12 @@ abstract class AbstractCompiler
    * @var View $view
    */
   public $view;
+
+  /**
+   * Contains the dictionary to use
+   * @var AbstractDictionary
+   */
+  protected $dictionary;
 
   /**
    * @param ViewElement $view_element
@@ -46,12 +50,6 @@ abstract class AbstractCompiler
    * @return string[]
    */
   abstract protected function get_extensions(): array;
-
-  /**
-   * Gets all of the components in this compiler in ::class
-   * @return string[]
-   */
-  abstract protected function get_components(): array;
 
   /**
    * Get the ViewVars class to use
@@ -75,6 +73,117 @@ abstract class AbstractCompiler
   }
 
   /**
+   * Parse the full file and divide into lexiqs
+   * @param string $contents
+   * @return (TextLexiq|Lexiq)[]
+   */
+  final protected function parse_contents($contents): array
+  {
+    // Perform dictionary regex search
+    $lexiqs = [];
+    foreach ($this->dictionary->get_lexiqs() as $lexiq_name => $lexiq_regex) {
+      $lexiq_regex = "/$lexiq_regex/";
+      if (preg_match_all($lexiq_regex, $contents, $matches, PREG_OFFSET_CAPTURE))
+        foreach ($matches[0] as $index => $match) {
+          $lexiq_vars = [];
+
+          foreach ($matches as $key => $group) {
+            if (!is_int($key) || $key == 0)
+              continue;
+            $lexiq_vars[$key] = $group[$index][0];
+          }
+
+          $lexiqs[] = new Lexiq($lexiq_name, $this, $lexiq_regex, $match[0], $match[1], $lexiq_vars);
+        }
+    }
+    // Sort per position
+    usort($lexiqs, fn($a, $b) => $a->position <=> $b->position);
+
+    // Add text in between
+    $result = [];
+    $lastPos = 0;
+
+    // Foreach every lexiqs and look behind them
+    foreach ($lexiqs as $lexiq) {
+      $lex_pos = $lexiq->position;
+
+      if ($lex_pos > $lastPos)
+        $result[] = new TextLexiq(substr($contents, $lastPos, $lex_pos - $lastPos), $lastPos);
+
+      $result[] = $lexiq;
+
+      // Update lastPos
+      $lastPos = $lex_pos + strlen($lexiq->content);
+    }
+
+    // If there is some text after the last lexiq
+    if ($lastPos < strlen($contents))
+      $result[] = new TextLexiq(substr($contents, $lastPos), $lastPos);
+
+    $result = array_values($result);
+
+    // Build tree
+
+    $tree = [];
+    $stack = [];
+
+    foreach ($result as $lexiq) {
+      while (!empty($stack)) {
+        $parent = end($stack);
+        $parent_end = $parent->position + strlen($parent->content);
+
+        if (
+          $lexiq->position >= $parent->position
+          && $lexiq->position + strlen($lexiq->content) <= $parent_end
+        ) {
+          $parent->children[] = $lexiq;
+          $stack[] = $lexiq;
+          continue 2;
+        } else array_pop($stack);
+      }
+
+      $tree[] = $lexiq;
+      $stack[] = $lexiq;
+    }
+
+    return $tree;
+  }
+
+  final protected function run_events($lexiqs): array
+  {
+    $events = $this->dictionary->get_events();
+
+    foreach ($events as $termEventClass => $event_list)
+      foreach ($event_list as $event_name => $condition) {
+        $keys = array_keys($lexiqs);
+        for ($c = 0; $c < count($keys);) {
+          $index = $keys[$c];
+          if (!$condition($lexiqs, $index)) {
+            $c++;
+            continue;
+          }
+          /** @var AbstractTermEvent $termEvent */
+          $termEvent = new $termEventClass($event_name, $this->dictionary, $this, $condition, $index, $lexiqs);
+          $lexiqs = $termEvent->return_lexiqs();
+          $c += $termEvent->return_skips();
+        }
+      }
+
+    return $lexiqs;
+  }
+
+  /**
+   * @param (TextLexiq|Lexiq)[] $lexiqs
+   */
+  final protected function concat_lexiqs($lexiqs)
+  {
+    $content = "";
+    foreach ($lexiqs as $l)
+      $content .= $l->content;
+    return $content;
+  }
+
+  /**
    * Compiles the file contents to a normal php file
    * @param string $contents
    */
@@ -83,15 +192,9 @@ abstract class AbstractCompiler
     // Add the extract in the first line
     $extract_syntax = "<?php extract(" . View::class . "::\$view_vars['" . $this->view_element->view_name . "']->get_data()); ?>";
 
-    foreach ($this->get_components() as $component_class) {
-
-      if (!is_a($component_class, Component::class, true))
-        throw new CompilerException("This element is not a compiler component : " . $component_class, $this);
-
-      /** @var Component $component */
-      $component = new $component_class;
-      $contents = $component->compile_all($contents);
-    }
+    $lexiqs = $this->parse_contents($contents);
+    $lexiqs = $this->run_events($lexiqs);
+    $contents = $this->concat_lexiqs($lexiqs);
 
     // Add it in the contents at the end to be wary of errors
     return $extract_syntax . $contents;

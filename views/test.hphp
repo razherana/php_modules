@@ -1,17 +1,6 @@
-<block header>
-  <h1>Header</h1>
-</block>
-
-<template lignetable>
-  <tr>
-    <td><?= $id ?></td>
-    <td><?= $nom ?></td>
-    <td><?= $prenom ?></td>
-  </tr>
-</template>
-
-<block footer>
-  <h1>Footer mlay be</h1>
-</block>
-
-<join template vars="compact('datas')"/>
+<if content="2 == 2">
+  baba
+</if elseif>
+<elseif content="3 == 3">
+  beebe
+</elseif>

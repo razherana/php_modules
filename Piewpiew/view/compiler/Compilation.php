@@ -8,12 +8,12 @@ class Compilation
 {
   /**
    * Contains the compiler for the view
-   * @var AbstractCompiler $compiler
+   * @var (AbstractCompiler|AbstractASTCompiler) $compiler
    */
   protected $compiler;
 
   /**
-   * @param AbstractCompiler $compiler
+   * @param (AbstractCompiler|AbstractASTCompiler) $compiler
    */
   public function __construct($compiler, $load_view = true)
   {
