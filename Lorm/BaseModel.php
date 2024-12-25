@@ -6,15 +6,72 @@ use Lorm\queries\QueryExecutor;
 
 use Closure;
 use Exception;
+use Lorm\queries\QueryUtil;
 
 abstract class BaseModel
 {
+  /**
+   * The primary key column
+   * @var string
+   */
   protected $primary_key = "";
+
+  /**
+   * The model's table name
+   * @var string
+   */
   protected $table = "";
+
+  /**
+   * The model's column
+   * @var string[]
+   */
   protected $columns = [];
+
+  /**
+   * All of the relations to pre-load
+   * @var string[]
+   */
   protected $eager_load = [];
 
+  /**
+   * Default value if the column is not on the received table
+   * @var mixed
+   */
+  protected $default = null;
+
+  /**
+   * All of casts before using elements
+   * @var array<string,\Closure>
+   */
+  protected function get_cast(): array
+  {
+    return [];
+  }
+
+  /**
+   * All of casts before using in a query
+   * @var array<string,\Closure>
+   */
+  protected function set_cast(): array
+  {
+    return [];
+  }
+
+  /**
+   * All of casts before using elements
+   * @var array<string,\Closure>
+   */
+  private $get_cast = null;
+
+  /**
+   * All of casts before using in a query
+   * @var array<string,\Closure>
+   */
+  private $set_cast = null;
+
   private $data = [];
+  private $og_data = [];
   private $joins = [];
 
   /**
@@ -98,7 +155,7 @@ abstract class BaseModel
   private static function applyAllEagerLoad($models, $options)
   {
     $example = new static();
-    foreach($options as $k => $v)
+    foreach ($options as $k => $v)
       $example->{$k} = $v;
     $eager_load = $example->eager_load;
     foreach ($eager_load as $e) {
@@ -121,7 +178,46 @@ abstract class BaseModel
     $data = array_filter($data, function ($k) {
       return in_array($k, $this->columns);
     }, ARRAY_FILTER_USE_KEY);
+
+    $keys = array_keys($data);
+    foreach ($this->columns as $col)
+      if (!in_array($col, $keys))
+        $data[$col] = $this->default;
+
+    if ($this->get_cast === null)
+      $this->get_cast = $this->get_cast();
+
+    foreach ($this->get_cast as $col => $cast)
+      $data[$col] = $cast($data[$col]);
+
     $this->data = $data;
+    $this->og_data = $data;
+  }
+
+  private function get_data()
+  {
+    $data = $this->data;
+
+    if ($this->set_cast === null)
+      $this->set_cast = $this->set_cast();
+
+    foreach ($this->set_cast as $col => $cast)
+      $data[$col] = $cast($data[$col]);
+
+    return $data;
+  }
+
+  private function get_og_data()
+  {
+    $data = $this->og_data;
+
+    if ($this->set_cast === null)
+      $this->set_cast = $this->set_cast();
+
+    foreach ($this->set_cast as $col => $cast)
+      $data[$col] = $cast($data[$col]);
+
+    return $data;
   }
 
   public function __get($name)
@@ -156,7 +252,7 @@ abstract class BaseModel
     $res = QueryExecutor::execute($q);
     foreach ($res as $line) {
       $el = new static();
-      foreach($options as $k => $v)
+      foreach ($options as $k => $v)
         $el->{$k} = $v;
       $el->init($line);
       $arr[] = $el;
@@ -167,16 +263,49 @@ abstract class BaseModel
 
   public function insert()
   {
+    $data = $this->get_data();
     $columns = array_filter($this->columns, fn($e) => $e != $this->primary_key);
     $params = [];
     foreach ($columns as $col) {
-      $value = $this->data[$col] ?? null;
-      $isString = is_string($value);
-      if($isString)
-        $value = "$value";
-      $params[] = $value;
+      $value = $data[$col] ?? null;
+      $params[":$col"] = $value;
     }
-    $q = "INSERT INTO " . $this->table . " (" . implode(", ", $columns) . ") VALUES (" . implode(", ", $params) . ")";
+    $q = "INSERT INTO " . $this->table . " (" . implode(", ", $columns) . ") VALUES (" . implode(", ", array_keys($params)) . ")";
     QueryExecutor::execute($q, $params);
+  }
+
+  public function update($use_pk = true)
+  {
+    $data = $this->get_data();
+    $og_data = $this->get_og_data();
+    $table = $this->table;
+    $columns = $this->columns;
+    $primary_key = $this->primary_key;
+
+    $ser = [];
+    foreach ($data as $k => $v)
+      $ser[":col_$k"] = $v;
+
+    $ser_og = [];
+    foreach ($data as $k => $v)
+      $ser_og[":$k"] = $v;
+
+    $q = "UPDATE $table SET " . implode(", ", array_map(fn($e) => $e . " = :col_$e", $columns)) . " WHERE ";
+    if (($og_pk = (!empty($primary_key) && $use_pk === true)) || ($new_pk = is_string($use_pk))) {
+      $pk = $og_pk === true && ($new_pk ?? false) === false ? $primary_key : $use_pk;
+
+      $where_pk = QueryUtil::where_parameter($pk, $og_data[$pk]);
+      $q .= $where_pk;
+
+      return QueryExecutor::execute($q, $ser + [":$pk" => $og_data[$pk]]);
+    }
+
+    $where_data = [];
+    foreach ($data as $k => $e)
+      $where_data[] = [$k, $e];
+
+    $q .= QueryUtil::where_parameter_all($where_data);
+
+    return QueryExecutor::execute($q, $ser + $ser_og);
   }
 }

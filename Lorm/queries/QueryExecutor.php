@@ -38,10 +38,7 @@ class QueryExecutor
     $pdo = $example->pdo;
 
     $prepared = $pdo->prepare($q);
-    $i = 1;
-    foreach (($params ?? []) as $param) 
-      $prepared->bindParam($i++, $param);
-    $res = $prepared->execute();
+    $res = $prepared->execute($params);
 
     $execute_only = false;
 
