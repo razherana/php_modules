@@ -325,7 +325,7 @@ abstract class BaseModel
     }
 
     $where_data = [];
-    foreach ($data as $k => $e)
+    foreach ($og_data as $k => $e)
       $where_data[] = [$k, $e];
 
     $q->where_all($where_data);
