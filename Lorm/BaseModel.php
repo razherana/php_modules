@@ -6,6 +6,7 @@ use Lorm\queries\QueryExecutor;
 
 use Closure;
 use Exception;
+use Lorm\queries\maker\queries\SortedQueryMaker;
 use Lorm\queries\QueryUtil;
 
 abstract class BaseModel
@@ -14,31 +15,37 @@ abstract class BaseModel
    * The primary key column
    * @var string
    */
-  protected $primary_key = "";
+  public $primary_key = "";
 
   /**
    * The model's table name
    * @var string
    */
-  protected $table = "";
+  public $table = "";
 
   /**
    * The model's column
    * @var string[]
    */
-  protected $columns = [];
+  public $columns = [];
 
   /**
    * All of the relations to pre-load
    * @var string[]
    */
-  protected $eager_load = [];
+  public $eager_load = [];
 
   /**
    * Default value if the column is not on the received table
    * @var mixed
    */
   protected $default = null;
+
+  /**
+   * The query maker for this model
+   * @var ModelQuery
+   */
+  private $query_maker;
 
   /**
    * All of casts before using elements
@@ -152,7 +159,7 @@ abstract class BaseModel
     }
   }
 
-  private static function applyAllEagerLoad($models, $options)
+  private static function apply_all_eager_load($models, $options)
   {
     $example = new static();
     foreach ($options as $k => $v)
@@ -168,6 +175,7 @@ abstract class BaseModel
   {
     if ($data !== null && is_array($data))
       $this->init($data);
+    $this->query_maker = new ModelQuery($this);
   }
 
   /**
@@ -244,12 +252,40 @@ abstract class BaseModel
       throw new Exception("No column $name");
   }
 
+  public function __unset($name)
+  {
+    throw new Exception("Unset is not available on a BaseModel");
+  }
+
+  public static function doquery()
+  {
+    $example = new static();
+    return $example->query_maker;
+  }
+
   public static function all($options = [])
   {
-    $arr = [];
     $example = new static();
-    $q = "SELECT * FROM " . $example->table;
+    $q = $example->query_maker->decode_query();
     $res = QueryExecutor::execute($q);
+    return static::from_array($res, $options);
+  }
+
+  public static function query($q, $options = [])
+  {
+    $res = QueryExecutor::execute($q);
+    return static::from_array($res, $options);
+  }
+
+  /**
+   * Make an assoc array into this BaseModel
+   * @param array<int, array<string, mixed>> $res The assoc array
+   * @param array<string, mixed> $options Options for the created objects 
+   * @return static[]
+   */
+  private static function from_array($res, $options = []): array
+  {
+    $arr = [];
     foreach ($res as $line) {
       $el = new static();
       foreach ($options as $k => $v)
@@ -257,7 +293,7 @@ abstract class BaseModel
       $el->init($line);
       $arr[] = $el;
     }
-    self::applyAllEagerLoad($arr, $options);
+    self::apply_all_eager_load($arr, $options);
     return $arr;
   }
 
@@ -265,13 +301,12 @@ abstract class BaseModel
   {
     $data = $this->get_data();
     $columns = array_filter($this->columns, fn($e) => $e != $this->primary_key);
-    $params = [];
-    foreach ($columns as $col) {
-      $value = $data[$col] ?? null;
-      $params[":$col"] = $value;
-    }
-    $q = "INSERT INTO " . $this->table . " (" . implode(", ", $columns) . ") VALUES (" . implode(", ", array_keys($params)) . ")";
-    QueryExecutor::execute($q, $params);
+    foreach ($columns as $col)
+      if (!isset($data[$col]))
+        $data[$col] = null;
+    $q = SortedQueryMaker::insert_into($this->table, $data)->decode_query();
+    fprintf(STDERR, "$q\n");
+    return QueryExecutor::execute($q);
   }
 
   public function update($use_pk = true)
@@ -279,33 +314,55 @@ abstract class BaseModel
     $data = $this->get_data();
     $og_data = $this->get_og_data();
     $table = $this->table;
-    $columns = $this->columns;
     $primary_key = $this->primary_key;
 
-    $ser = [];
-    foreach ($data as $k => $v)
-      $ser[":col_$k"] = $v;
-
-    $ser_og = [];
-    foreach ($data as $k => $v)
-      $ser_og[":$k"] = $v;
-
-    $q = "UPDATE $table SET " . implode(", ", array_map(fn($e) => $e . " = :col_$e", $columns)) . " WHERE ";
+    $q = SortedQueryMaker::update_set($table, $data);
     if (($og_pk = (!empty($primary_key) && $use_pk === true)) || ($new_pk = is_string($use_pk))) {
       $pk = $og_pk === true && ($new_pk ?? false) === false ? $primary_key : $use_pk;
-
-      $where_pk = QueryUtil::where_parameter($pk, $og_data[$pk]);
-      $q .= $where_pk;
-
-      return QueryExecutor::execute($q, $ser + [":$pk" => $og_data[$pk]]);
+      $q->where($pk, "=", $og_data[$pk]);
+      fprintf(STDERR,  $q->decode_query() . "\n");
+      return QueryExecutor::execute($q->decode_query());
     }
 
     $where_data = [];
     foreach ($data as $k => $e)
       $where_data[] = [$k, $e];
 
-    $q .= QueryUtil::where_parameter_all($where_data);
+    $q->where_all($where_data);
+    fprintf(STDERR,  $q->decode_query() . "\n");
 
-    return QueryExecutor::execute($q, $ser + $ser_og);
+    return QueryExecutor::execute($q->decode_query());
+  }
+
+  public function delete($use_pk = true)
+  {
+    $data = $this->get_data();
+    $table = $this->table;
+    $primary_key = $this->primary_key;
+
+    $q = SortedQueryMaker::delete()->from($table);
+    if (($og_pk = (!empty($primary_key) && $use_pk === true)) || ($new_pk = is_string($use_pk))) {
+      $pk = $og_pk === true && ($new_pk ?? false) === false ? $primary_key : $use_pk;
+      $q->where($pk, "=", $data[$pk]);
+      fprintf(STDERR,  $q->decode_query() . "\n");
+      return QueryExecutor::execute($q->decode_query());
+    }
+
+    $where_data = [];
+    foreach ($data as $k => $e)
+      $where_data[] = [$k, $e];
+
+    $q->where_all($where_data);
+    fprintf(STDERR,  $q->decode_query() . "\n");
+
+    return QueryExecutor::execute($q->decode_query());
+  }
+
+  public function __toString()
+  {
+    $arr = [];
+    foreach ($this->data as $k => $v)
+      $arr[] = "$k=$v";
+    return "{" . join(",", $arr) . "}";
   }
 }
