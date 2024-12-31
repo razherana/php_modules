@@ -158,10 +158,14 @@ abstract class AbstractASTCompiler
         $keys = array_keys($lexiqs);
         for ($c = 0; $c < count($keys);) {
           $index = $keys[$c];
-          if (!$condition($lexiqs, $index)) {
+          if ($condition instanceof \Closure && !$condition($lexiqs, $index)) {
             $c++;
             continue;
           }
+          
+          if(is_int($event_name))
+            $event_name = $condition;
+
           /** @var AbstractTermEvent $termEvent */
           $termEvent = new $termEventClass($event_name, $this->dictionary, $this, $condition, $index, $lexiqs);
           $lexiqs = $termEvent->return_lexiqs();

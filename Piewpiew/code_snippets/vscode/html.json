@@ -48,7 +48,7 @@
 	"For HPHP": {
 		"prefix": "for",
 		"body": [
-			"<for content=\"$${1:i} = $2; $${1:i} < count($3); $${1:i}++\">",
+			"<for loop=\"$${1:i} = $2; $${1:i} < count($3); $${1:i}++\">",
 			"$4",
 			"</for>"
 		],
@@ -57,9 +57,18 @@
 	"Foreach HPHP": {
 		"prefix": "foreach",
 		"body": [
-			"<foreach content=\"$${1:array} as ${3:$${4:keys} =>} $${2:variable}\">",
+			"<foreach loop=\"$${1:array} as ${3:$${4:keys} =>} $${2:variable}\">",
 			"$5",
 			"</foreach>"
+		],
+		"description": "Make a foreach loop with hphp"
+	},
+	"While HPHP": {
+		"prefix": "while",
+		"body": [
+			"<while loop=\"$1\">",
+			"$2",
+			"</while>"
 		],
 		"description": "Make a foreach loop with hphp"
 	},

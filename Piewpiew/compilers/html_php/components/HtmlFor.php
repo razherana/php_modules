@@ -20,11 +20,11 @@ class HtmlFor extends Component
 
   protected function get_uncompiled_syntax_regex($uncompiled_syntax, &$mode): string
   {
-    return '\<(foreach|for)\s+content\s*\=\s*"(.*?)"\s*>';
+    return '\<(foreach|for)\s+loop\s*\=\s*"(.*?)"\s*>';
   }
 
   protected function get_uncompiled_syntax(): string
   {
-    return "<foreach|for content=\"@\">";
+    return "<foreach|for loop=\"@\">";
   }
 }

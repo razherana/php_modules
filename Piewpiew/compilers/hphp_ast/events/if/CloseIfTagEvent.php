@@ -27,6 +27,7 @@ class CloseIfTagEvent extends AbstractTermEvent
       if ($lexiqs[2] instanceof TextLexiq) {
         if (trim($lexiqs[2]->content) != "")
           throw new HPHPAstViewException("Found text after closing_if_$endif_type tag");
+        $lexiqs[2]->replace("");
         if (!($lexiqs[3] instanceof Lexiq) || ($type = $lexiqs[3]->name) != "open_$endif_type")
           throw new HPHPAstViewException("Expecting open_$endif_type but found $type");
       } else if (!($lexiqs[2] instanceof Lexiq) || ($type = $lexiqs[2]->name) != "open_$endif_type")

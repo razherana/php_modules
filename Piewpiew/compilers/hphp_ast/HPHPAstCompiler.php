@@ -9,6 +9,26 @@ class HPHPAstCompiler extends AbstractASTCompiler
 {
   protected $dictionary;
 
+  // Compiling only
+
+  /**
+   * Tells if a block is started.
+   * @var bool
+   */
+  public $block = false;
+
+  /**
+   * Last index of open loop
+   * @var array<string, int>
+   */
+  public $loop_index = [];
+
+  /**
+   * Nest index of loop
+   * @var array<string, int>
+   */
+  public $loop_nest = [];
+
   public function __construct($view_element)
   {
     parent::__construct($view_element);
