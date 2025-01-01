@@ -4,7 +4,10 @@ use Piewpiew\compilers\hphp_ast\HPHPAstCompiler;
 use Piewpiew\compilers\php\PhpCompiler;
 use Piewpiew\view\comm\ViewElement;
 use Piewpiew\view\comm\ViewVars;
+use Piewpiew\view\compiler\AbstractASTCompiler;
+use Piewpiew\view\compiler\AbstractCompiler;
 use Piewpiew\view\compiler\Compilation;
+use Piewpiew\view\compiler\exceptions\CompilerException;
 
 /**
  * This function is a fast helper to get a view element with it's content
@@ -21,6 +24,9 @@ function piewsub_view($view_name, $data = [], $compiler = PhpCompiler::class, $e
 
   // Creates the compiler
   $compiler = new $compiler($view_el);
+
+  if(!is_a($compiler, AbstractCompiler::class))
+    throw new CompilerException("The compiler specified isn't an AbstractCompiler but a " . $compiler::class);
 
   // Do compilation things
   new Compilation($compiler);
@@ -61,6 +67,9 @@ function piewpiew_view($view_name, $data = [], $compiler = HPHPAstCompiler::clas
 
   // Creates the compiler
   $compiler = new $compiler($view_el);
+
+  if(!is_a($compiler, AbstractASTCompiler::class))
+    throw new CompilerException("The compiler specified isn't an AbstractASTCompiler but a " . $compiler::class);
 
   // Do compilation things
   new Compilation($compiler);
