@@ -1,6 +1,12 @@
-<if content="2 == 2">
-  baba
-</if elseif>
-<elseif content="3 == 3">
-  beebe
-</elseif>
+<block testblock>
+  <h1>COntent test</h1>
+</block>
+<template templ use="[]">
+  <div>baba <?= $i ?></div>
+</template>
+
+<for loop="$i = 0; $i < 10; $i++">
+  <use-template templ vars="compact('i')" />
+</for>
+
+<join template vars="['test' => 'test']" />

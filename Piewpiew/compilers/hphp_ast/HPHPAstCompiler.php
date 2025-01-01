@@ -2,7 +2,7 @@
 
 namespace Piewpiew\compilers\hphp_ast;
 
-use Piewpiew\compilers\html_php\HtmlViewVars;
+use Piewpiew\compilers\hphp_ast\HPHPViewVars;
 use Piewpiew\view\compiler\AbstractASTCompiler;
 
 class HPHPAstCompiler extends AbstractASTCompiler
@@ -10,6 +10,18 @@ class HPHPAstCompiler extends AbstractASTCompiler
   protected $dictionary;
 
   // Compiling only
+
+  /**
+   * Tells if a template has been used
+   * @var bool
+   */
+  public $template = false;
+
+  /**
+   * Tells if a join has been used
+   * @var bool
+   */
+  public $join = false;
 
   /**
    * Tells if a block is started.
@@ -47,6 +59,6 @@ class HPHPAstCompiler extends AbstractASTCompiler
 
   public function get_view_var_class(): string
   {
-    return HtmlViewVars::class;
+    return HPHPViewVars::class;
   }
 }

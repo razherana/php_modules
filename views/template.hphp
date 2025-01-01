@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><?= $test ?></title>
+</head>
+
+<body>
+  <h1>Aiza koa?</h1>
+  <use testblock />
+
+  <?php $variables = ["Iphone 15", "Ipad gen 6"]; ?>
+  <foreach loop="$variables as $val">
+    <include cart vars="['i' => $val]" />
+  </foreach>
+</body>
+
+</html>

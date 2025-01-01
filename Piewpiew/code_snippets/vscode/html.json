@@ -75,10 +75,10 @@
 	"If ElIf Else HPHP": {
 		"prefix": "ifelif",
 		"body": [
-			"<if content=\"$1\">",
+			"<if condition=\"$1\">",
 			"$2",
 			"</if ${3:elseif}>",
-			"<elseif content=\"$4\">",
+			"<elseif condition=\"$4\">",
 			"</elseif ${5:else}>",
 			"<else>",
 			"$6",
@@ -89,7 +89,7 @@
 	"If HPHP": {
 		"prefix": "if",
 		"body": [
-			"<if content=\"$1\">",
+			"<if condition=\"$1\">",
 			"$2",
 			"</if>"
 		],
@@ -107,7 +107,7 @@
 	"ElIf HPHP": {
 		"prefix": "elif",
 		"body": [
-			"<elseif content=\"$1\">",
+			"<elseif condition=\"$1\">",
 			"$2",
 			"</elseif>"
 		],
@@ -116,7 +116,7 @@
 	"If Else HPHP": {
 		"prefix": "ifelse",
 		"body": [
-			"<if content=\"$1\">",
+			"<if condition=\"$1\">",
 			"$2",
 			"</if else>",
 			"<else>",
@@ -128,7 +128,7 @@
 	"ElIf Else HPHP": {
 		"prefix": "elifelse",
 		"body": [
-			"<elseif content=\"$1\">",
+			"<elseif condition=\"$1\">",
 			"$2",
 			"</elseif else>",
 			"<else>",
@@ -140,10 +140,10 @@
 	"ElIf ElIf HPHP": {
 		"prefix": "elifelse",
 		"body": [
-			"<elseif content=\"$1\">",
+			"<elseif condition=\"$1\">",
 			"$2",
 			"</elseif elseif>",
-			"<elseif content=\"$3\">",
+			"<elseif condition=\"$3\">",
 			"$4",
 			"</elseif>"
 		],
