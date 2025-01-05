@@ -31,6 +31,8 @@ class JoinTagEvent extends AbstractTermEvent
 
     $variables = trim($lexiqs[0]->matches[2]) ?? "[]";
 
+    $name = str_replace(".", "/", $name);
+
     $lexiqs[0]->replace("<?php \$___vars___->join('$name', $variables); ");
     $lexiqs[1]->replace("?>");
   }
