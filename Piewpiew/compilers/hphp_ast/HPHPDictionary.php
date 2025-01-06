@@ -51,7 +51,7 @@ class HPHPDictionary extends AbstractDictionary
       "close_block" => "\<\/block\s*",
 
       // Template
-      "open_template" => "\<template\s(\w+)(?:\s+use=\"(.*?)\"\s*)?\s*",
+      "open_template" => "\<template\s+(\w+)(?:\s+use=\"(.*?)\"\s*)?\s*",
       "close_template" => "\<\/template\s*",
 
       // Orphans
@@ -114,7 +114,7 @@ class HPHPDictionary extends AbstractDictionary
 
       CloseTemplateTagEvent::class => [
         "close_tag" => fn($lexiqs, $index) => $lexiqs[$index] instanceof Lexiq
-          && in_array($lexiqs[$index]->name, ["close_template"]),
+          && $lexiqs[$index]->name == "close_template",
       ],
 
       // Orphan tags

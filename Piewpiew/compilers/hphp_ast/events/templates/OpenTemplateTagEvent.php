@@ -5,6 +5,7 @@ namespace Piewpiew\compilers\hphp_ast\events\templates;
 use Piewpiew\compilers\hphp_ast\exceptions\HPHPAstViewException;
 use Piewpiew\compilers\hphp_ast\HPHPAstCompiler;
 use Piewpiew\view\compiler\ast\AbstractTermEvent;
+use Piewpiew\view\compiler\ast\Lexiq;
 use Piewpiew\view\compiler\ast\TextLexiq;
 
 class OpenTemplateTagEvent extends AbstractTermEvent
@@ -21,11 +22,7 @@ class OpenTemplateTagEvent extends AbstractTermEvent
 
     /** @var HPHPAstCompiler $compiler */
     $compiler = $this->compiler;
-
-    if ($compiler->template)
-      throw new HPHPAstViewException("Templates can't be nested, index = " . $this->index);
-
-    $compiler->template = true;
+    $compiler->template++;
 
     $lexiqs[1]->replace("");
   }
@@ -38,6 +35,6 @@ class OpenTemplateTagEvent extends AbstractTermEvent
 
   public function return_skips(): int
   {
-    return 2;
+    return 1;
   }
 }

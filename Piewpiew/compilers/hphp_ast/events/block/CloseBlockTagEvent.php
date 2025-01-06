@@ -21,10 +21,10 @@ class CloseBlockTagEvent extends AbstractTermEvent
     /** @var HPHPAstCompiler $compiler */
     $compiler = $this->compiler;
 
-    if (!$compiler->block)
+    if ($compiler->block <= 0)
       throw new HPHPAstViewException("Closing on no open block on index : " . $this->index);
 
-    $compiler->block = false;
+    $compiler->block--;
 
     $lexiqs[0]->replace('<?php $___vars___->end_block(); ');
     $lexiqs[1]->replace("?>");

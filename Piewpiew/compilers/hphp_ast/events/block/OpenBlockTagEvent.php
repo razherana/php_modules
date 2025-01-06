@@ -21,11 +21,7 @@ class OpenBlockTagEvent extends AbstractTermEvent
 
     /** @var HPHPAstCompiler $compiler */
     $compiler = $this->compiler;
-
-    if ($compiler->block)
-      throw new HPHPAstViewException("Blocks can't be nested, index = " . $this->index);
-
-    $compiler->block = true;
+    $compiler->block++;
 
     $lexiqs[0]->replace('<?php $___vars___->start_block("' . trim($name, " ") . '"); ');
     $lexiqs[1]->replace("?>");

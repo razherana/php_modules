@@ -15,7 +15,7 @@ class HPHPAstCompiler extends AbstractASTCompiler
    * Tells if a template has been used
    * @var bool
    */
-  public $template = false;
+  public $template = 0;
 
   /**
    * Tells if a join has been used
@@ -27,7 +27,7 @@ class HPHPAstCompiler extends AbstractASTCompiler
    * Tells if a block is started.
    * @var bool
    */
-  public $block = false;
+  public $block = 0;
 
   /**
    * Last index of open loop

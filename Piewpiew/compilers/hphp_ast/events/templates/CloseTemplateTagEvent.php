@@ -21,10 +21,10 @@ class CloseTemplateTagEvent extends AbstractTermEvent
     /** @var HPHPAstCompiler $compiler */
     $compiler = $this->compiler;
 
-    if (!$compiler->template)
+    if ($compiler->template <= 0)
       throw new HPHPAstViewException("Closing on no open template on index : " . $this->index);
 
-    $compiler->template = false;
+    $compiler->template--;
 
     $lexiqs[1]->replace("");
   }
@@ -37,6 +37,6 @@ class CloseTemplateTagEvent extends AbstractTermEvent
 
   public function return_skips(): int
   {
-    return 2;
+    return 1;
   }
 }
