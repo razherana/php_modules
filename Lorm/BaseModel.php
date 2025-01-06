@@ -358,6 +358,11 @@ abstract class BaseModel
     return QueryExecutor::execute($q->decode_query());
   }
 
+  public static function find($pk) {
+    $ms = static::doquery()->where((new static)->primary_key, '=', $pk)->get();
+    return $ms[0] ?? null;
+  }
+
   public function __toString()
   {
     $arr = [];
