@@ -14,7 +14,8 @@ $modules = [
 
   "ConfigReader",
   "Piewpiew",
-  "Lorm"
+  "Lorm",
+  "Auth"
 ];
 
 foreach ($modules as $k => $v) {
