@@ -33,6 +33,7 @@ class HPHPDictionary extends AbstractDictionary
       "closing_tag" => "\>",
       "open_php" => "\<\?php",
       "close_php" => "\?\>",
+      "close_form" => "\<\/form",
 
       // If conditions
       "open_if" => "\<if(?:\s+condition\s*=\s*\"(.*?)\")?\s*",

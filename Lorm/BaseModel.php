@@ -7,7 +7,6 @@ use Lorm\queries\QueryExecutor;
 use Closure;
 use Exception;
 use Lorm\queries\maker\queries\SortedQueryMaker;
-use Lorm\queries\QueryUtil;
 
 abstract class BaseModel
 {
@@ -358,11 +357,30 @@ abstract class BaseModel
     return QueryExecutor::execute($q->decode_query());
   }
 
+  public static function find($pk) {
+    $ms = static::doquery()->where((new static)->primary_key, '=', $pk)->get();
+    return $ms[0] ?? null;
+  }
+
   public function __toString()
   {
     $arr = [];
     foreach ($this->data as $k => $v)
       $arr[] = "$k=$v";
     return "{" . join(",", $arr) . "}";
+  }
+
+  /**
+   * Creates a new element
+   * @param array<string, mixed> $datas
+   */
+  public static function create($datas)
+  {
+    $static = new static($datas);
+
+    $datas = array_filter($static->get_data(), fn($e) => $e != $static->primary_key, ARRAY_FILTER_USE_KEY);
+
+    $query = SortedQueryMaker::insert_into($static->table, $datas);
+    return QueryExecutor::execute($query->decode_query());
   }
 }

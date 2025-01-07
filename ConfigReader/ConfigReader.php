@@ -2,8 +2,8 @@
 
 namespace ConfigReader;
 
-use config\exceptions\ConfigReadingException;
-use config\exceptions\UnknownConfigException;
+use ConfigReader\exceptions\ConfigReadingException;
+use ConfigReader\exceptions\UnknownConfigException;
 
 class ConfigReader
 {
