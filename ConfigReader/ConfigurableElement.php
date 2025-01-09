@@ -47,4 +47,24 @@ abstract class ConfigurableElement
 
     return $content[$config_name];
   }
+
+  /**
+   * Get all of the configs and cache if possible
+   */
+  public function read_all_cache_config()
+  {
+    if (!isset(static::$cached_config[static::class])) {
+      static::$cached_config[static::class] = ConfigReader::get_all($this->config_file());
+    }
+
+    return static::$cached_config[static::class];
+  }
+
+  /**
+   * Get all of the configs and cache if possible
+   */
+  public function read_all_config()
+  {
+    return ConfigReader::get_all($this->config_file());
+  }
 }
