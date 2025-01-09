@@ -46,6 +46,8 @@ class HPHPDictionary extends AbstractDictionary
       // Loops
       "open_loop" => "\<(foreach|for|while)\s+loop\s*=\s*\"(.*?)\"\s*",
       "close_loop" => "\<\/(foreach|for|while)\s*",
+      "continue" => "\<continue(?:\s+(\d+))?\s*\/?\s*\>",
+      "break" => "\<break(?:\s+(\d+))?\s*\/?\s*\>",
 
       // Block
       "open_block" => "\<block\s+(\w+)\s*",
