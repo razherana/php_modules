@@ -30,11 +30,18 @@ class LoopEndControllerEvent extends AbstractTermEvent
           'lexiq' => $lexiq,
           'type' => $lexiq->matches[1],
         ];
-      } elseif($tag == 'close_loop') {
+      } elseif ($tag == 'close_loop') {
         $currentBlock = &$stack[count($stack) - 1] ?? false;
-        if(empty($stack) || $currentBlock['type'] !== $lexiq->matches[1] )
+        if (empty($stack) || $currentBlock['type'] !== $lexiq->matches[1])
           throw new HPHPAstViewException("Unexpected closing '{$lexiq->matches[1]}' tag at position $position without a matching opening '{$currentBlock['type']}'.");
         array_pop($stack);
+      } elseif ($tag == 'continue' || $tag == 'break') {
+        if (empty($stack))
+          throw new HPHPAstViewException("Unexpected '$tag' tag not in a loop.");
+        $count = $lexiq->matches[1] ?? 1;
+        if (count($stack) < $count)
+          throw new HPHPAstViewException("Cannot $tag $count level(s).");
+        $lexiq->replace("<?php $tag $count; ?>");
       }
     }
 
