@@ -13,9 +13,10 @@ $modules = [
   // "module_namespace" => "module_folder"
 
   "ConfigReader",
+  "CheckInput",
   "Piewpiew",
   "Lorm",
-  "Auth"
+  "Auth",
 ];
 
 foreach ($modules as $k => $v) {
