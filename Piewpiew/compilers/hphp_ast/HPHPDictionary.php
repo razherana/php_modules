@@ -33,6 +33,7 @@ class HPHPDictionary extends AbstractDictionary
       "closing_tag" => "\>",
       "open_php" => "\<\?php",
       "close_php" => "\?\>",
+      "close_form" => "\<\/form",
 
       // If conditions
       "open_if" => "\<if(?:\s+condition\s*=\s*\"(.*?)\")?\s*",
@@ -45,6 +46,8 @@ class HPHPDictionary extends AbstractDictionary
       // Loops
       "open_loop" => "\<(foreach|for|while)\s+loop\s*=\s*\"(.*?)\"\s*",
       "close_loop" => "\<\/(foreach|for|while)\s*",
+      "continue" => "\<continue(?:\s+(\d+))?\s*\/?\s*\>",
+      "break" => "\<break(?:\s+(\d+))?\s*\/?\s*\>",
 
       // Block
       "open_block" => "\<block\s+(\w+)\s*",

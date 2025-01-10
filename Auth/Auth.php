@@ -356,17 +356,18 @@ class Auth extends ConfigurableElement
   }
 
   /**
-   * Saves the $model_instance into the auth session
-   * @param ModelInstance $model_instance The authenticated model
+   * Saves the $model into the auth session
+   * @param BaseModel $model The authenticated model
    * @return bool
    */
-  protected function save($model_instance)
+  protected function save($model) : bool
   {
-    $key = $model_instance[$model_instance->parent_model::$primary_key];
+    $key = $model->{$model->primary_key};
 
     $auth = $_SESSION[$this->read_cached_config("session_key_name")];
     $auth[$this->name] = $key;
 
     $_SESSION[$this->read_cached_config("session_key_name")] = $auth;
+    return true;
   }
 }

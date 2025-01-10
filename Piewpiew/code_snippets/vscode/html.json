@@ -175,5 +175,19 @@
 			"</guest${3: else}>"
 		],
 		"description": "Make a guest block"
+	},
+	"Break HPHP": {
+		"prefix": "break",
+		"body": [
+			"<break/>"
+		],
+		"description": "Break in a loop"
+	},
+	"Continue HPHP": {
+		"prefix": "continue",
+		"body": [
+			"<continue $1/>"
+		],
+		"description": "Continue in a loop"
 	}
 }
