@@ -6,9 +6,10 @@ use Lorm\queries\QueryExecutor;
 
 use Closure;
 use Exception;
+use JsonSerializable;
 use Lorm\queries\maker\queries\SortedQueryMaker;
 
-abstract class BaseModel
+abstract class BaseModel implements JsonSerializable
 {
   /**
    * The primary key column
@@ -105,6 +106,10 @@ abstract class BaseModel
     return ["belongsTo", $otherModel, $closureJoin, $relation_name];
   }
 
+  public function jsonSerialize(): array
+  {
+    return $this->get_data();
+  }
 
   /**
    * @param BaseModel[] $models
@@ -357,7 +362,8 @@ abstract class BaseModel
     return QueryExecutor::execute($q->decode_query());
   }
 
-  public static function find($pk) {
+  public static function find($pk)
+  {
     $ms = static::doquery()->where((new static)->primary_key, '=', $pk)->get();
     return $ms[0] ?? null;
   }
