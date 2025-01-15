@@ -62,7 +62,35 @@ class CheckInput extends ConfigurableElement
 
     $checkings = $this->read_cached_config("checking");
 
+    /** @var array<string,array{0:\Closure,1:string}> $functions */
+    $functions = $this->read_cached_config("functions");
+
+    $all = [];
+    foreach (array_keys($this->rule_strings) as $element) {
+      $value = @($this->access_method)($element, $this->data);
+      $all[$element] = $value;
+    }
+
     foreach ($this->rule_strings as $element => $string) {
+      $value = @($this->access_method)($element, $this->data);
+
+      foreach ($functions as $function_arr) {
+        $fun_closure = $function_arr[0];
+        $fun_regex = $function_arr[1];
+
+        preg_match_all($fun_regex, $string, $matches, PREG_OFFSET_CAPTURE);
+
+        foreach ($matches[0] as $k => $v) {
+          $position = $v[1];
+          $fun_vars = [];
+          foreach ($matches as $k_ => $v_)
+            $fun_vars[$k_] = $v_[$k][0];
+          $result = $fun_closure($value, $element, $all, $fun_vars);
+          $string = substr_replace($string, $result, $position);
+          $this->rule_strings[$element] = $string;
+        }
+      }
+
       $splitted = preg_split("/$sep/", $string);
       foreach ($splitted as $rule) {
         preg_match("/([a-zA-Z]+).*/", $rule, $matches);
@@ -88,14 +116,16 @@ class CheckInput extends ConfigurableElement
 
         preg_match($regex, $rule, $vars);
 
-        $this->checkers[$element][] = new TestInput($config_name, $closure, $vars, $regex);
+        $testInput = new TestInput($config_name, $closure, $vars, $regex);
+
+        $this->checkers[$element][] = $testInput;
       }
     }
   }
 
   /**
    * Execute the check
-   * @return string|true The message in string or true
+   * @return true|array{0:string,1:string,2:TestInput} The [message, rule_name, TestInput] or true if no errors
    */
   public function check($custom_messages = [])
   {
@@ -105,19 +135,29 @@ class CheckInput extends ConfigurableElement
     /** @var array<string, Closure> $messages */
     $messages = $this->read_cached_config("messages");
 
+    $all = [];
     foreach ($this->checkers as $element => $array_checks) {
       $value = @($this->access_method)($element, $this->data);
-      foreach ($array_checks as $check)
-        if (!($check->closure)($value, $element, $this->data, $check->vars, $check)) {
-          $result = $custom_messages["$element:{$check->name}"] ?? ($messages[$check->name])($value, $element, $this->data, $check->vars, $check);
+      $all[$element] = $value;
+    }
+
+    foreach ($this->checkers as $element => $array_checks) {
+      $count = [];
+      $value = @($this->access_method)($element, $this->data);
+
+      foreach ($array_checks as $check) {
+        $current = ($count[$check->name] = ($count[$check->name] ?? 0) + 1);
+        if (!($check->closure)($value, $element, $all, $check->vars, $check)) {
+          $result = $custom_messages["$element:{$check->name}{$current}"] ?? $custom_messages["$element:{$check->name}"] ?? ($messages[$check->name])($value, $element, $this->data, $check->vars, $check);
 
           // If true, it may be optional or other things
           // We just skip this current element
           if ($result === true)
             break;
 
-          return $result;
+          return [$result, $check->name, $check];
         }
+      }
     }
 
     return true;

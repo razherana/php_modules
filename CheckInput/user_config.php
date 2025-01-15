@@ -36,6 +36,21 @@ return [
   ],
 
   /**
+   * Functions
+   * They can be called inside a rule, 
+   * that's why they have the $e and $k from checking.
+   * Cannot be nested, but will be in the future.
+   * 
+   * @param $e The value of the element
+   * @param $k The name of the element
+   * @param $all All of the elements in the container
+   * @param $vars All of the vars from the regex
+   * @return mixed
+   */
+  "functions" => [
+  ],
+
+  /**
    * Access method
    */
   "access" => [
