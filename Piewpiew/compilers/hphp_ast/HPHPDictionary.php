@@ -58,10 +58,10 @@ class HPHPDictionary extends AbstractDictionary
       "close_template" => "\<\/template\s*",
 
       // Orphans
-      "join" => "\<join\s+(\w+)(?:\s+vars=\"(.*?)\"\s*)?\s*\/?\s*",
-      "use" => "\<use\s+(\w+)\s*\/?\s*",
-      "include" => "\<include\s+(\w+)(?:\s+vars=\"(.*?)\"\s*)?\s*\/?\s*",
-      "use-template" => "<use-template\s+(\w+)(?:\s+vars=\"(.*?)\"\s*)?\/?\s*",
+      "join" => "\<join\s+([\w\/\.]+)(?:\s+vars=\"(.*?)\"\s*)?\s*\/?\s*",
+      "use" => "\<use\s+([\w\/\.]+)\s*\/?\s*",
+      "include" => "\<include\s+([\w\/\.]+)(?:\s+vars=\"(.*?)\"\s*)?\s*\/?\s*",
+      "use-template" => "<use-template\s+([\w\/\.]+)(?:\s+vars=\"(.*?)\"\s*)?\/?\s*",
     ];
   }
 
