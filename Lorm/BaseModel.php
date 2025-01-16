@@ -166,14 +166,39 @@ abstract class BaseModel implements JsonSerializable
   private static function apply_all_eager_load($models, $options)
   {
     $example = new static();
-    foreach ($options as $k => $v)
+    foreach ($options as $k => $v) {
       $example->{$k} = $v;
+    }
     $eager_load = $example->eager_load;
-    foreach ($eager_load as $e) {
-      $rel = $example->{$e}();
+    foreach ($eager_load as $key => $value) {
+      if (is_string($key)) {
+        // Nested eager loading
+        $relation = $key;
+        $nestedOptions = $value;
+      } else {
+        // Simple eager loading
+        $relation = $value;
+        $nestedOptions = [];
+      }
+
+      $rel = $example->{$relation}();
       call_user_func_array([self::class, $rel[0] . "Static"], array_merge([$models], array_slice($rel, 1)));
+
+      // Apply nested eager loading
+      if (!empty($nestedOptions)) {
+        foreach ($models as $model) {
+          if (isset($model->joins[$relation])) {
+            $relatedModels = is_array($model->joins[$relation]) ? $model->joins[$relation] : [$model->joins[$relation]];
+            foreach ($relatedModels as $relatedModel) {
+              $relatedModel->eager_load = $nestedOptions;
+              self::apply_all_eager_load([$relatedModel], $nestedOptions);
+            }
+          }
+        }
+      }
     }
   }
+
 
   public function __construct($data = null)
   {
@@ -383,10 +408,125 @@ abstract class BaseModel implements JsonSerializable
   public static function create($datas)
   {
     $static = new static($datas);
+    return $static->insert();
+  }
 
-    $datas = array_filter($static->get_data(), fn($e) => $e != $static->primary_key, ARRAY_FILTER_USE_KEY);
+  /**
+   * @param string $otherModel
+   * @param Closure $closureJoin
+   * @param string $relation_name
+   */
+  private function hasOneMethod($otherModel, $closureJoin, $relation_name)
+  {
+    $others = $otherModel::all();
+    foreach ($others as $other)
+      if ($closureJoin($this, $other)) {
+        $this->joins[$relation_name] = $other;
+        break;
+      }
+  }
 
-    $query = SortedQueryMaker::insert_into($static->table, $datas);
-    return QueryExecutor::execute($query->decode_query());
+  public function hasOne($otherModel, $closureJoin, $relation_name)
+  {
+    return ["hasOne", $otherModel, $closureJoin, $relation_name];
+  }
+
+  private static function hasOneStatic($models, $otherModel, $closureJoin, $relation_name)
+  {
+    $others = $otherModel::all();
+    foreach ($models as $currModel) {
+      foreach ($others as $other) {
+        if ($closureJoin($currModel, $other)) {
+          $currModel->joins[$relation_name] = $other;
+          break;
+        }
+      }
+    }
+  }
+
+  /**
+   * @param string $otherModel
+   * @param string $pivotModel
+   * @param Closure $closureJoin
+   * @param string $relation_name
+   */
+  private function belongsToManyMethod($otherModel, $pivotModel, $closureJoin, $relation_name)
+  {
+    $pivots = $pivotModel::all();
+    $others = $otherModel::all();
+    if (!isset($this->joins[$relation_name]))
+      $this->joins[$relation_name] = [];
+    foreach ($pivots as $pivot) {
+      foreach ($others as $other) {
+        if ($closureJoin($this, $pivot, $other)) {
+          $this->joins[$relation_name][] = $other;
+        }
+      }
+    }
+  }
+
+  public function belongsToMany($otherModel, $pivotModel, $closureJoin, $relation_name)
+  {
+    return ["belongsToMany", $otherModel, $pivotModel, $closureJoin, $relation_name];
+  }
+
+  private static function belongsToManyStatic($models, $otherModel, $pivotModel, $closureJoin, $relation_name)
+  {
+    $pivots = $pivotModel::all();
+    $others = $otherModel::all();
+    foreach ($models as $currModel) {
+      if (!isset($currModel->joins[$relation_name]))
+        $currModel->joins[$relation_name] = [];
+      foreach ($pivots as $pivot) {
+        foreach ($others as $other) {
+          if ($closureJoin($currModel, $pivot, $other)) {
+            $currModel->joins[$relation_name][] = $other;
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * @param string $otherModel
+   * @param string $throughModel
+   * @param Closure $closureJoin
+   * @param string $relation_name
+   */
+  private function hasManyThroughMethod($otherModel, $throughModel, $closureJoin, $relation_name)
+  {
+    $throughs = $throughModel::all();
+    $others = $otherModel::all();
+    if (!isset($this->joins[$relation_name]))
+      $this->joins[$relation_name] = [];
+    foreach ($throughs as $through) {
+      foreach ($others as $other) {
+        if ($closureJoin($this, $through, $other)) {
+          $this->joins[$relation_name][] = $other;
+        }
+      }
+    }
+  }
+
+  public function hasManyThrough($otherModel, $throughModel, $closureJoin, $relation_name)
+  {
+    return ["hasManyThrough", $otherModel, $throughModel, $closureJoin, $relation_name];
+  }
+
+  private static function hasManyThroughStatic($models, $otherModel, $throughModel, $closureJoin, $relation_name)
+  {
+    $throughs = $throughModel::all();
+    $others = $otherModel::all();
+    foreach ($models as $currModel) {
+      if (!isset($currModel->joins[$relation_name]))
+        $currModel->joins[$relation_name] = [];
+      foreach ($throughs as $through) {
+        foreach ($others as $other) {
+          if ($closureJoin($currModel, $through, $other)) {
+            $currModel->joins[$relation_name][] = $other;
+          }
+        }
+      }
+    }
   }
 }
