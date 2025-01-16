@@ -41,10 +41,17 @@ class CheckInput extends ConfigurableElement
    */
   private $rule_strings = [];
 
+  /**
+   * The array_data_accessor
+   * @var ArrayDataAccessor
+   */
+  private $array_data_accessor = null;
+
   public function __construct($data = [], $access_method = self::ARRAY_ASSOC)
   {
     $this->data = $data;
     $this->access_method = $this->read_cached_config('access')[$access_method] ?? false;
+    $this->array_data_accessor = new ArrayDataAccessor($data, $this->access_method);
 
     if ($this->access_method === false)
       throw new ConfigNotFoundException("The access_method of name '{$access_method}' doesn't exist...");
@@ -62,35 +69,7 @@ class CheckInput extends ConfigurableElement
 
     $checkings = $this->read_cached_config("checking");
 
-    /** @var array<string,array{0:\Closure,1:string}> $functions */
-    $functions = $this->read_cached_config("functions");
-
-    $all = [];
-    foreach (array_keys($this->rule_strings) as $element) {
-      $value = @($this->access_method)($element, $this->data);
-      $all[$element] = $value;
-    }
-
     foreach ($this->rule_strings as $element => $string) {
-      $value = @($this->access_method)($element, $this->data);
-
-      foreach ($functions as $function_arr) {
-        $fun_closure = $function_arr[0];
-        $fun_regex = $function_arr[1];
-
-        preg_match_all($fun_regex, $string, $matches, PREG_OFFSET_CAPTURE);
-
-        foreach ($matches[0] as $k => $v) {
-          $position = $v[1];
-          $fun_vars = [];
-          foreach ($matches as $k_ => $v_)
-            $fun_vars[$k_] = $v_[$k][0];
-          $result = $fun_closure($value, $element, $all, $fun_vars);
-          $string = substr_replace($string, $result, $position);
-          $this->rule_strings[$element] = $string;
-        }
-      }
-
       $splitted = preg_split("/$sep/", $string);
       foreach ($splitted as $rule) {
         preg_match("/([a-zA-Z]+).*/", $rule, $matches);
@@ -135,11 +114,10 @@ class CheckInput extends ConfigurableElement
     /** @var array<string, Closure> $messages */
     $messages = $this->read_cached_config("messages");
 
-    $all = [];
-    foreach ($this->checkers as $element => $array_checks) {
-      $value = @($this->access_method)($element, $this->data);
-      $all[$element] = $value;
-    }
+    /** @var array<string,array{0:\Closure,1:string}> $functions */
+    $functions = $this->read_cached_config("functions");
+
+    $all = $this->array_data_accessor;
 
     foreach ($this->checkers as $element => $array_checks) {
       $count = [];
@@ -147,7 +125,7 @@ class CheckInput extends ConfigurableElement
 
       foreach ($array_checks as $check) {
         $current = ($count[$check->name] = ($count[$check->name] ?? 0) + 1);
-        if (!($check->closure)($value, $element, $all, $check->vars, $check)) {
+        if (!($check->closure)($value, $element, $all, $check->vars, $check, $functions)) {
           $result = $custom_messages["$element:{$check->name}{$current}"] ?? $custom_messages["$element:{$check->name}"] ?? ($messages[$check->name])($value, $element, $this->data, $check->vars, $check);
 
           // If true, it may be optional or other things

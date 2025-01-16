@@ -7,6 +7,7 @@
  * Use user_config for user configs
  */
 
+use CheckInput\exceptions\UnknownCheckingException;
 use Lorm\queries\maker\queries\SortedQueryMaker;
 use Lorm\queries\QueryExecutor;
 
@@ -40,6 +41,40 @@ $anon_funs = [
   }
 ];
 
+/**
+ * Recursively parse and evaluate functions within a rule
+ * @param string $rule
+ * @param mixed $e
+ * @param string $k
+ * @param array $all
+ * @param array $functions
+ * @return mixed
+ */
+$evaluate_rule = function ($rule, $e, $k, $all, $functions) use (&$evaluate_rule) {
+  // Match functions within the rule
+  while (preg_match('/(\w+)\((.*)\)/', $rule, $matches, PREG_OFFSET_CAPTURE)) {
+    $func_name = $matches[1][0];
+    $func_args = $matches[2][0];
+    // var_dump($matches);
+    // var_dump($func_name, $func_args);
+
+
+    // Split arguments and evaluate them
+    $args = trim($func_args);
+    if (preg_match('/(\w+)\((.*?)\)/', $args))
+      $args = $evaluate_rule($args, $e, $k, $all, $functions);
+
+    // Call the function
+    if (isset($functions[$func_name])) {
+      $replace = var_export(@call_user_func_array($functions[$func_name][0], [$e, $k, $all, [1 => $args]]), true);
+      $rule = str_replace($matches[0][0], $replace, $rule);
+    } else
+      throw new UnknownCheckingException("The function '$func_name' is undefined in the rule '$rule'");
+  }
+
+  return $rule;
+};
+
 return [
   /**
    * Contains checking functions
@@ -48,6 +83,7 @@ return [
    * @param $all All of the elements in the container
    * @param $vars All of the vars from the TestInput instance
    * @param $testInput The TestInput instance itself
+   * @param $functions The functions from the configs
    * @var $this The $this var is binded to the TestInput
    * @return bool
    */
@@ -69,23 +105,23 @@ return [
       "/exists\:(\w+),(\w+)/"
     ],
     "sup" => [
-      fn($e, $k, $all, $vars) => $e > $vars[1],
+      fn($e, $k, $all, $vars, $testInput, $functions) => $e > $evaluate_rule($testInput->vars[1], $e, $k, $all, $functions),
       "/sup:(.*)/"
     ],
     "eqsup" => [
-      fn($e, $k, $all, $vars) => $e >= $vars[1],
+      fn($e, $k, $all, $vars, $testInput, $functions) => $e >= $evaluate_rule($testInput->vars[1], $e, $k, $all, $functions),
       "/eqsup:(.*)/"
     ],
     "inf" => [
-      fn($e, $k, $all, $vars) => $e < $vars[1],
+      fn($e, $k, $all, $vars, $testInput, $functions) => $e < $evaluate_rule($testInput->vars[1], $e, $k, $all, $functions),
       "/inf:(.*)/"
     ],
     "eqinf" => [
-      fn($e, $k, $all, $vars) => $e <= $vars[1],
+      fn($e, $k, $all, $vars, $testInput, $functions) => $e <= $evaluate_rule($testInput->vars[1], $e, $k, $all, $functions),
       "/eqinf:(.*)/"
     ],
     "eq" => [
-      fn($e, $k, $all, $vars) => $e == $vars[1],
+      fn($e, $k, $all, $vars, $testInput, $functions) => $e == $evaluate_rule($testInput->vars[1], $e, $k, $all, $functions),
       "/eq:(.*)/"
     ]
   ],

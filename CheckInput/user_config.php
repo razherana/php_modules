@@ -39,7 +39,6 @@ return [
    * Functions
    * They can be called inside a rule, 
    * that's why they have the $e and $k from checking.
-   * Cannot be nested, but will be in the future.
    * 
    * @param $e The value of the element
    * @param $k The name of the element
