@@ -105,23 +105,23 @@ return [
       "/exists\:(\w+),(\w+)/"
     ],
     "sup" => [
-      fn($e, $k, $all, $vars, $testInput, $functions) => $e > $evaluate_rule($testInput->vars[1], $e, $k, $all, $functions),
+      fn($e, $k, $all, $vars, $testInput, $functions) => $e > eval("return " . $evaluate_rule($testInput->vars[1], $e, $k, $all, $functions) . ";"),
       "/sup:(.*)/"
     ],
     "eqsup" => [
-      fn($e, $k, $all, $vars, $testInput, $functions) => $e >= $evaluate_rule($testInput->vars[1], $e, $k, $all, $functions),
+      fn($e, $k, $all, $vars, $testInput, $functions) => $e >= eval("return " . $evaluate_rule($testInput->vars[1], $e, $k, $all, $functions) . ";"),
       "/eqsup:(.*)/"
     ],
     "inf" => [
-      fn($e, $k, $all, $vars, $testInput, $functions) => $e < $evaluate_rule($testInput->vars[1], $e, $k, $all, $functions),
+      fn($e, $k, $all, $vars, $testInput, $functions) => $e < eval("return " . $evaluate_rule($testInput->vars[1], $e, $k, $all, $functions) . ";"),
       "/inf:(.*)/"
     ],
     "eqinf" => [
-      fn($e, $k, $all, $vars, $testInput, $functions) => $e <= $evaluate_rule($testInput->vars[1], $e, $k, $all, $functions),
+      fn($e, $k, $all, $vars, $testInput, $functions) => $e <= eval("return " . $evaluate_rule($testInput->vars[1], $e, $k, $all, $functions) . ";"),
       "/eqinf:(.*)/"
     ],
     "eq" => [
-      fn($e, $k, $all, $vars, $testInput, $functions) => $e == $evaluate_rule($testInput->vars[1], $e, $k, $all, $functions),
+      fn($e, $k, $all, $vars, $testInput, $functions) => $e == eval("return " . $evaluate_rule($testInput->vars[1], $e, $k, $all, $functions) . ";"),
       "/eq:(.*)/"
     ]
   ],
