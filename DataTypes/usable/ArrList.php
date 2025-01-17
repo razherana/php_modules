@@ -17,6 +17,12 @@ class ArrList extends ListInterface
       $this->add($element);
   }
 
+  /**
+   * Inserts the specified element at the specified position in this list.
+   * @param $index
+   * @param $element
+   * @return bool
+   */
   public function addAt($index, $element): bool
   {
     if ($this->offsetExists($index))
@@ -44,6 +50,7 @@ class ArrList extends ListInterface
     if (!$this->offsetExists($index))
       return false;
     array_splice($this->elements, $index, 1);
+    $this->elements = array_values($this->elements);
     return true;
   }
 
@@ -101,11 +108,20 @@ class ArrList extends ListInterface
     return true;
   }
 
-  public function remove($index): bool
+  private function remove0($index)
   {
-    if (!$this->offsetExists($index))
-      return false;
     unset($this->elements[$index]);
+  }
+
+  public function remove($element): bool
+  {
+    $index = $this->indexOf($element);
+
+    if ($index === -1)
+      return false;
+
+    $this->remove0($index);
+    $this->elements = array_values($this->elements);
     return true;
   }
 
@@ -199,6 +215,10 @@ class ArrList extends ListInterface
     return $removed;
   }
 
+  /**
+   * This method retains all elements in this list that are present in the specified list.
+   * @param $elements
+   */
   public function retainAll($elements): bool
   {
     if (!($elements instanceof ArrList))
@@ -208,9 +228,10 @@ class ArrList extends ListInterface
     $retained = false;
     foreach ($this->elements as $index => $element)
       if (!$elements->contains($element)) {
-        $this->remove($index);
+        $this->remove0($index);
         $retained = true;
       }
+    $this->elements = array_values($this->elements);
     return $retained;
   }
 
@@ -223,7 +244,7 @@ class ArrList extends ListInterface
     $removed = false;
     foreach ($elements->toArray() as $element)
       if ($this->contains($element)) {
-        $this->remove($this->indexOf($element));
+        $this->remove($element);
         $removed = true;
       }
     return $removed;
