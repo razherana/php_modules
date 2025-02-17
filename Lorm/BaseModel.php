@@ -334,7 +334,6 @@ abstract class BaseModel implements JsonSerializable
       if (!isset($data[$col]))
         $data[$col] = null;
     $q = SortedQueryMaker::insert_into($this->table, $data)->decode_query();
-    fprintf(STDERR, "$q\n");
     return QueryExecutor::execute($q);
   }
 
@@ -349,7 +348,6 @@ abstract class BaseModel implements JsonSerializable
     if (($og_pk = (!empty($primary_key) && $use_pk === true)) || ($new_pk = is_string($use_pk))) {
       $pk = $og_pk === true && ($new_pk ?? false) === false ? $primary_key : $use_pk;
       $q->where($pk, "=", $og_data[$pk]);
-      fprintf(STDERR,  $q->decode_query() . "\n");
       return QueryExecutor::execute($q->decode_query());
     }
 
@@ -358,7 +356,6 @@ abstract class BaseModel implements JsonSerializable
       $where_data[] = [$k, $e];
 
     $q->where_all($where_data);
-    fprintf(STDERR,  $q->decode_query() . "\n");
 
     return QueryExecutor::execute($q->decode_query());
   }
@@ -373,7 +370,6 @@ abstract class BaseModel implements JsonSerializable
     if (($og_pk = (!empty($primary_key) && $use_pk === true)) || ($new_pk = is_string($use_pk))) {
       $pk = $og_pk === true && ($new_pk ?? false) === false ? $primary_key : $use_pk;
       $q->where($pk, "=", $data[$pk]);
-      fprintf(STDERR,  $q->decode_query() . "\n");
       return QueryExecutor::execute($q->decode_query());
     }
 
@@ -382,7 +378,6 @@ abstract class BaseModel implements JsonSerializable
       $where_data[] = [$k, $e];
 
     $q->where_all($where_data);
-    fprintf(STDERR,  $q->decode_query() . "\n");
 
     return QueryExecutor::execute($q->decode_query());
   }
