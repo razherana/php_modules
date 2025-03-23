@@ -17,7 +17,8 @@ $modules = [
   "Piewpiew",
   "Lorm",
   "Auth",
-  "DataTypes"
+  "DataTypes",
+  "Sezzion"
 ];
 
 foreach ($modules as $k => $v) {
