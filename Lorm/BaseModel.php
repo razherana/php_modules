@@ -388,6 +388,20 @@ abstract class BaseModel implements JsonSerializable
     return $ms[0] ?? null;
   }
 
+  /**
+   * Like ::all but maps all model's pk as the key
+   * @param array<string, mixed> $options
+   * @return array<int|string, static>
+   */
+  public static function mapToPk($options = [])
+  {
+    $all = static::all($options);
+    $res = [];
+    foreach ($all as $el)
+      $res[$el->{$el->primary_key}] = $el;
+    return $res;
+  }
+
   public function __toString()
   {
     $arr = [];
